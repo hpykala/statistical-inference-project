@@ -2,7 +2,10 @@
 title: "Central Limit Theorem"
 author: "Heli Pykälä"
 date: '2016-05-10'
-output: html_document
+output: 
+  html_document: 
+    fig_height: 3
+    fig_width: 5
 ---
 
 ```{r setup, include=FALSE}
@@ -11,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Overview
 
-In this report we explore Central Limit Theorem by calculating averages of samples from exponential distribution.
+The Central Limit Theorem states that averages of independent and indentically distributed random variables should follow the standard normal distribution when properly normalized. We test this by simulation. We find that the Central Limit Theorem seems to hold for averages of 40 samples from the exponential distribution $Exp(0.2)$
 
 ## Simulation
 
@@ -32,21 +35,25 @@ samples <- rexp(n*m, lambda)
 
 ##The simulated exponential distribution
 
-Theoretical mean of exponential distribution is $\mu = 1/\lambda$ and it's standard deviation is $\sigma = 1/\lambda$
+First we study a sample of 1000 exponentials:
 
+```{r}
+s <- samples[1:1000]
+```
+Theoretical mean of exponential distribution is $\mu = \frac{1}{\lambda}$ and it's standard deviation is $\sigma = \frac{1}{\lambda}$
 
 ```{r}
 1/lambda #theoretical mean and sd
-mean(samples) #mean of the sample
-sd(samples) #standard deviation of the sample
+mean(s) #mean of the sample
+sd(s) #standard deviation of the sample
 ```
 
-The mean and standard deviation of the samples follow closely to the theretical values.
+The mean and standard deviation of the samples are close to the theoretical values.
 
 Then Plot the density histogram of the samples with the theoretical density given $\lambda = 0.2$. Theoretical mean is the thick black vertical line and calculated mean of the sample is the cyan vertical line.
 ```{r}
 library(ggplot2)
-dfSamples <- data.frame(x = samples)
+dfSamples <- data.frame(x = s)
 ggplot(dfSamples,aes(x=x))+
     geom_histogram(colour = "black", fill = "steelblue", binwidth = 2, boundary = 0,  aes(y = ..density..)) +
     stat_function(fun = dexp, size = 2, args = list(rate = lambda)) +
@@ -54,37 +61,57 @@ ggplot(dfSamples,aes(x=x))+
     geom_vline(xintercept = mean(samples), size = 1, color =  "cyan")
 ```
 
-The distribution looks very similar to the theoretical density function of the exponential distribution.
+The distribution looks very similar to the theoretical density function of the exponential distribution. We can note that this original distribution has very different characteristics than the normal distribution. It is very skewed, always > 0 and has the largest density at 0.
 
-## Averages of exponential samples
+## The sample mean
 
-Arrange the samples into a matrix with 1000 rows and 40 columns and calculate columnwise means to acquire 1000 samples of averages of 40 exponentials.
+Arrange the samples into a matrix with 1000 rows and 40 columns and calculate column-wise means to acquire 1000 samples of means of 40 exponentials.
 
 ```{r}
 mat <- matrix(samples, nrow = m, ncol = n)
 means <- apply(mat, 1, mean)
 
 ```
+### Sample Mean versus Theoretical Mean
 
-Theoretically the mean of the means should follow a normal distribution centered at the population mean, $\mu = 1/\lambda$ and the standard deviation should be $\frac{\sigma}{\sqrt{n}} = \frac{1}{\lambda\sqrt{n}}$
+Theoretically the mean of the means should be the population mean, $\mu = \frac{1}{\lambda}$
 
 ```{r}
 1/lambda #theoretical mean
 mean(means) #mean of the sample
-1/lambda/sqrt(n) #theoretical sd
+```
+The sample mean is close to the theoretical value.
+
+### Sample Variance versus Theoretical Variance
+
+The standard deviation should be $\frac{\sigma}{\sqrt{n}} = \frac{1}{\lambda\sqrt{n}}$
+
+```{r}
+1/lambda/sqrt(n) #theoretical standard deviation
 sd(means) #standard deviation of the sample
 ```
+The standard deviation of the sample is close to the theoretical value.
 
-The mean and standard deviation of the sample of 1000 averages of 40 exponentials follow quite closely to the theoretical values.
+### Distribution
 
-Then plot the density histogram of the averages along with the theoretical normal distribution with $\mu = 1/\lambda$ and $sd = \frac{1}{\lambda\sqrt{n}}$. 
+Normalize the values by subtracting the mean and dividing by the standard deviation
+
 ```{r}
-dfMeans <- data.frame(x = means)
-ggplot(dfMeans,aes(x=x))+
-    geom_histogram(colour = "black", fill = "steelblue", binwidth = .25, aes(y = ..density..)) + 
-    stat_function(fun = dnorm, size = 2, args = list(mean = 1/lambda, sd =  1/lambda/sqrt(n))) +
-    geom_vline(xintercept = 1/lambda, size = 2, color = "black") +
-    geom_vline(xintercept = mean(means), size = 1, color = "cyan")
+scaledMeans <- scale(means, center = 1/lambda, scale = 1/lambda/sqrt(n))
 ```
 
+Plot the density histogram of the scaled averages along with the standard normal distribution. 
+```{r}
+dfMeans <- data.frame(x = scaledMeans)
+ggplot(dfMeans,aes(x=x))+
+    geom_histogram(colour = "black", fill = "steelblue", binwidth = .25, aes(y = ..density..)) + 
+    stat_function(fun = dnorm, size = 2) +
+    geom_vline(xintercept = 0, size = 2, color = "black") +
+    geom_vline(xintercept = mean(scaledMeans), size = 1, color = "cyan")
+```
 
+The histogram looks similar to the theoretical normal distribution.
+
+##Conclusion
+
+The Central Limit Theorem seems to hold for averages of 40 exponentials. The original exponential distribution is really different from the normal distribution, but when we calculate the average of 40 random samples the resulting random variable seems to follow the normal distribution with expected parameters reasonably well.
