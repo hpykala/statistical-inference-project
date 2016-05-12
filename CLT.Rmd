@@ -1,11 +1,14 @@
 ---
-title: "Central Limit Theorem"
+title: "Exponential distribution and the Central Limit Theorem"
 author: "Heli Pykälä"
-date: '2016-05-10'
-output: 
-  html_document: 
+date: '2016-05-12'
+output:
+  word_document: 
     fig_height: 3
     fig_width: 5
+  html_document:
+    fig_height: 2.5
+    fig_width: 3.5
 ---
 
 ```{r setup, include=FALSE}
@@ -18,9 +21,8 @@ The Central Limit Theorem states that averages of independent and indentically d
 
 ## Simulation
 
-First we set parameters for the simulation. Exponential distribution has one parameter: rate marked by $\lambda$. In this simulation we use $\lambda = 0.2$. We draw 40 samples from $Exp(\lambda)$ and repeat the simulation 1000 times. Call the number of samples and the number of simulations $n$ and $m$ respectively.
+First we set the parameters for the simulation. Exponential distribution has one parameter: rate marked by $\lambda$. In this simulation we use $\lambda = 0.2$. We draw 40 samples from $Exp(\lambda)$ and repeat the simulation 1000 times. Call the number of samples and the number of simulations $n$ and $m$ respectively.
 ```{r params}
-library(ggplot2)
 lambda <- .2
 n <- 40
 m <- 1000
@@ -32,40 +34,9 @@ set.seed(135)
 samples <- rexp(n*m, lambda)
 ```
 
-
-##The simulated exponential distribution
-
-First we study a sample of 1000 exponentials:
-
-```{r}
-s <- samples[1:1000]
-```
-Theoretical mean of exponential distribution is $\mu = \frac{1}{\lambda}$ and it's standard deviation is $\sigma = \frac{1}{\lambda}$
-
-```{r}
-1/lambda #theoretical mean and sd
-mean(s) #mean of the sample
-sd(s) #standard deviation of the sample
-```
-
-The mean and standard deviation of the samples are close to the theoretical values.
-
-Then Plot the density histogram of the samples with the theoretical density given $\lambda = 0.2$. Theoretical mean is the thick black vertical line and calculated mean of the sample is the cyan vertical line.
-```{r}
-library(ggplot2)
-dfSamples <- data.frame(x = s)
-ggplot(dfSamples,aes(x=x))+
-    geom_histogram(colour = "black", fill = "steelblue", binwidth = 2, boundary = 0,  aes(y = ..density..)) +
-    stat_function(fun = dexp, size = 2, args = list(rate = lambda)) +
-    geom_vline(xintercept = 1/lambda, size = 2, color = "black") +
-    geom_vline(xintercept = mean(samples), size = 1, color =  "cyan")
-```
-
-The distribution looks very similar to the theoretical density function of the exponential distribution. We can note that this original distribution has very different characteristics than the normal distribution. It is very skewed, always > 0 and has the largest density at 0.
-
 ## The sample mean
 
-Arrange the samples into a matrix with 1000 rows and 40 columns and calculate column-wise means to acquire 1000 samples of means of 40 exponentials.
+Arrange the samples into a matrix with 1000 rows and 40 columns and calculate row-wise means to acquire 1000 samples of means of 40 exponentials.
 
 ```{r}
 mat <- matrix(samples, nrow = m, ncol = n)
@@ -77,8 +48,7 @@ means <- apply(mat, 1, mean)
 Theoretically the mean of the means should be the population mean, $\mu = \frac{1}{\lambda}$
 
 ```{r}
-1/lambda #theoretical mean
-mean(means) #mean of the sample
+data.frame(Theoretical = 1/lambda, Sample.mean = mean(means))
 ```
 The sample mean is close to the theoretical value.
 
@@ -87,8 +57,7 @@ The sample mean is close to the theoretical value.
 The standard deviation should be $\frac{\sigma}{\sqrt{n}} = \frac{1}{\lambda\sqrt{n}}$
 
 ```{r}
-1/lambda/sqrt(n) #theoretical standard deviation
-sd(means) #standard deviation of the sample
+data.frame(Theoretical = 1/lambda/sqrt(n), Sample.sd = sd(means))
 ```
 The standard deviation of the sample is close to the theoretical value.
 
@@ -100,18 +69,31 @@ Normalize the values by subtracting the mean and dividing by the standard deviat
 scaledMeans <- scale(means, center = 1/lambda, scale = 1/lambda/sqrt(n))
 ```
 
-Plot the density histogram of the scaled averages along with the standard normal distribution. 
-```{r}
+Plot the density histogram of the scaled averages along with the standard normal distribution. Also for comparison plot the density histogram of 1000 samples of the underlying exponential distribution. For both figures the thick black vertical line shows the theoretical mean and the cyan line the mean calculated from the data.
+```{r fig.show="hold"}
+library(ggplot2)
 dfMeans <- data.frame(x = scaledMeans)
 ggplot(dfMeans,aes(x=x))+
-    geom_histogram(colour = "black", fill = "steelblue", binwidth = .25, aes(y = ..density..)) + 
+    geom_histogram(colour = "black", fill = "steelblue", 
+                   binwidth = .25, aes(y = ..density..)) + 
     stat_function(fun = dnorm, size = 2) +
     geom_vline(xintercept = 0, size = 2, color = "black") +
-    geom_vline(xintercept = mean(scaledMeans), size = 1, color = "cyan")
+    geom_vline(xintercept = mean(scaledMeans), size = 1, color = "cyan") +
+    ggtitle("Density histogram of sample mean")
+
+dfSamples <- data.frame(x = samples[1:1000])
+ggplot(dfSamples,aes(x=x))+
+    geom_histogram(colour = "black", fill = "steelblue", binwidth = 2, 
+                   boundary = 0,  aes(y = ..density..)) +
+    stat_function(fun = dexp, size = 2, args = list(rate = lambda)) +
+    geom_vline(xintercept = 1/lambda, size = 2, color = "black") +
+    geom_vline(xintercept = mean(dfSamples$x), size = 1, color =  "cyan") +
+    ggtitle("Density histogram of original distribution")
 ```
 
-The histogram looks similar to the theoretical normal distribution.
+The histogram looks similar to the theoretical normal distribution. The original exponential distribution has very different charcteristics being always > 0, having the largest density at 0, and then exponentially decreasing.
 
 ##Conclusion
 
 The Central Limit Theorem seems to hold for averages of 40 exponentials. The original exponential distribution is really different from the normal distribution, but when we calculate the average of 40 random samples the resulting random variable seems to follow the normal distribution with expected parameters reasonably well.
+
