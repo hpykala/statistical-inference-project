@@ -1,0 +1,88 @@
+---
+title: "ToothGrowth"
+author: "Heli Pykälä"
+date: '2016-05-12'
+output: 
+  word_document: 
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+
+
+## Data
+
+The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, (orange juice or ascorbic acid (a form of vitamin C and coded as VC).
+
+
+```{r}
+library(datasets)
+library(ggplot2)
+tooth <- ToothGrowth
+tooth$dose <- factor(tooth$dose)
+summary(tooth)
+
+ggplot(data = tooth, aes(x=dose,y=len)) +
+ geom_boxplot(fill="steelblue") +
+    facet_grid(facets = .~supp)
+```
+
+From the boxplot it seems clear that the dosage of the vitamin C has correlation with the tooth growth. The supplement type doesn't have such a clear connection. It seems that the response is better with small doses for orange juice, but with the maximun dose the difference is small. There seems to be different variability between the groups.
+
+## Hypothesis testing
+
+To test the hypotheses we use Student's t-test. In all cases we make two group comparisons to research if the groups have different mean tooth growth. By using t-test we assume normal distribution for the underlineing population. We assume samples to be independent from each other, but won't require equal variances between groups.
+
+### Delivery method
+
+First we perform the Student's t-test to establish if the different delivery methods regardless of the dosage differ from each other. We perform a two sample two sided test with 95 % confidence level. Since data is not paired and we can't assume that the variances between groups are equal we use the default values for the t.test-function.
+
+Hypotheses: 
+
+$H_0: \mu_{OJ} = \mu_{VC}$ 
+
+$H_a: \mu_{OJ} \neq \mu_{VC}$
+
+```{r}
+test1 <- t.test(tooth$len[tooth$supp == "OJ"], tooth$len[tooth$supp == "VC"])
+test1
+```
+
+the p-value of the test is `r round(test1$p.value,2)` so we can't reject the null hypothesis by the evidence given by the test.
+
+### Dosage
+
+Next we perform two more t-tests to see if there's statistically significant difference in tooth growth with different dosages of the vitamin C. First we test if there is difference between groups that received the dose 0.5 or 1.0 and then between groups 1.0 and 2.0. Again we use the default values indicating two sided test and different variances between groups.
+
+Hypotheses: 
+
+$H_0: \mu_{0.5} = \mu_{1.0}$ 
+
+$H_a: \mu_{0.5} \neq \mu_{1.0}$
+
+```{r}
+test2 <- t.test(tooth$len[tooth$dose == 0.5], tooth$len[tooth$dose == 1.0])
+test2
+```
+
+Hypotheses: 
+
+$H_0: \mu_{1.0} = \mu_{2.0}$ 
+
+$H_a: \mu_{1.0} \neq \mu_{2.0}$
+
+```{r}
+test3 <- t.test(tooth$len[tooth$dose == 1.0], tooth$len[tooth$dose == 2.0])
+test3
+```
+
+```{r}
+test4 <- t.test(tooth$len[tooth$supp == "OJ" & tooth$dose == 2.0], tooth$len[tooth$supp == "VC" & tooth$dose == 2.0])
+test4
+```
