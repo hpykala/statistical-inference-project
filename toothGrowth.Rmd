@@ -35,14 +35,24 @@ ggplot(data = tooth, aes(x=dose,y=len)) +
 
 From the boxplot it seems clear that the dosage of the vitamin C has correlation with the tooth growth. The supplement type doesn't have such a clear connection. It seems that the response is better with small doses for orange juice, but with the maximun dose the difference is small. There seems to be different variability between the groups.
 
+```{r}
+plot = ggplot(data = tooth, aes(x=len))
+plot + geom_histogram() + facet_grid(facets = dose ~supp)
+```
+
+From histograms we see that each dosage x delivery method intersection looks somewhat normal distributed, but as the sample size is only 10 that is difficult to say for sure. However, if we combine the data by margins so that we can look at dosage or delivery method independently the distribution is pretty far from normal as it won't be even unimodal.
+
 ## Hypothesis testing
 
-To test the hypotheses we use Student's t-test. In all cases we make two group comparisons to research if the groups have different mean tooth growth. By using t-test we assume normal distribution for the underlineing population. We assume samples to be independent from each other, but won't require equal variances between groups.
+In the data exploration we concluded that assuming normally distributed samples isn't necessarily valid. Student's t-test is quite robust even when the data aren't normally distributed, but to be on the safe side we use a nonparametric permutation test to avoid having to make assumptions about the underlying distribution. In the permutation test our null hypothesis is that the different samples have same average. If the null hypothesis is valid the group label is irrelevant and we can permutate our samples again. We use function permTest to calculate two sided p values for the tests. For details of the function, please refer to the appendix. Source the R function and set seed for reproducibility.
+```{r}
+source("permTest.R")
+set.seed(123)
+```
 
 ### Delivery method
 
-First we perform the Student's t-test to establish if the different delivery methods regardless of the dosage differ from each other. We perform a two sample two sided test with 95 % confidence level. Since data is not paired and we can't assume that the variances between groups are equal we use the default values for the t.test-function.
-
+First we study the difference between delivery methods. The null hypothesis is that both delivery methods have the same average and we want to test alternative hypothesis that they are different. 
 Hypotheses: 
 
 $H_0: \mu_{OJ} = \mu_{VC}$ 
@@ -50,15 +60,16 @@ $H_0: \mu_{OJ} = \mu_{VC}$
 $H_a: \mu_{OJ} \neq \mu_{VC}$
 
 ```{r}
-test1 <- t.test(tooth$len[tooth$supp == "OJ"], tooth$len[tooth$supp == "VC"])
-test1
+pt1 <- permTest(tooth$len,tooth$supp, "VC", "OJ")
+pt1$p
+pt1$origStat
 ```
 
-the p-value of the test is `r round(test1$p.value,2)` so we can't reject the null hypothesis by the evidence given by the test.
+the p-value of the test is `r round(pt1$p,2)` We can't reject the null hypothesis for 95 % confidence interval.
 
 ### Dosage
 
-Next we perform two more t-tests to see if there's statistically significant difference in tooth growth with different dosages of the vitamin C. First we test if there is difference between groups that received the dose 0.5 or 1.0 and then between groups 1.0 and 2.0. Again we use the default values indicating two sided test and different variances between groups.
+Next we perform two more permutation tests to see if there's statistically significant difference in tooth growth with different dosages of the vitamin C. First we test if there is difference between groups that received the dose 0.5 or 1.0 and then between groups 1.0 and 2.0.
 
 Hypotheses: 
 
@@ -67,9 +78,11 @@ $H_0: \mu_{0.5} = \mu_{1.0}$
 $H_a: \mu_{0.5} \neq \mu_{1.0}$
 
 ```{r}
-test2 <- t.test(tooth$len[tooth$dose == 0.5], tooth$len[tooth$dose == 1.0])
-test2
+pt2 <- permTest(tooth$len,tooth$dose, 0.5, 1.0)
+pt2$p
+pt2$origStat
 ```
+The p-value is close to zero so we can reject the null hypothesis with 95 % confidence interval or any other reasonable critical value. The difference between groups is `r round(pt2$origStat,2)` so we can conclude that increasing the dosage from 0.5 to 1.0 increases the tooth growth.
 
 Hypotheses: 
 
@@ -78,11 +91,63 @@ $H_0: \mu_{1.0} = \mu_{2.0}$
 $H_a: \mu_{1.0} \neq \mu_{2.0}$
 
 ```{r}
-test3 <- t.test(tooth$len[tooth$dose == 1.0], tooth$len[tooth$dose == 2.0])
-test3
+pt3 <- permTest(tooth$len,tooth$dose, 1.0, 2.0)
+pt3$p
+pt3$origStat
 ```
+The p-value is close to zero so we can reject the null hypothesis with 95 % confidence interval or any other reasonable critical value. The difference between groups is `r round(pt3$origStat,2)` so we can conclude that increasing the dosage from 1.0 to 2.0 increases the tooth growth.
+
+#Conclusion
+
+Based on the tooth growth data we found that the dosage of vitamin C correlates with the length of odontoplasts of guinea pigs. We obtained statistically significant result that guinea pigs getting 1.0 mg of vitamin C per day had longer odontoplasts than the group getting 0.5 mg/day. The group getting 2.0 mg per day had even better tooth growth. However based on this data we found no statistically significant evidence that the delivery method has effect on the tooth growth.
 
 ```{r}
-test4 <- t.test(tooth$len[tooth$supp == "OJ" & tooth$dose == 2.0], tooth$len[tooth$supp == "VC" & tooth$dose == 2.0])
-test4
+#Appendix
+
+##Function to perform two sided permutation test to test if the mean of variable y is different
+##between groups g1 and g2
+## y: vector containing samples for the variable
+## group: vector containing group values for y
+## g1: value of the first group
+## g2: value of the second group
+permTest <- function(y, group, g1, g2, n = 10000) {
+    
+    # test validity of parameters
+    if(length(y) != length(group)) {
+        message("ERROR: y and group have different lengths")
+        return()
+    }
+    
+    if(!any(group == g1)) {
+        message("no samples in g1")
+        return()
+        
+    }
+    
+    if(!any(group == g2)) {
+        message("no samples in g2")
+        return()
+        
+    }
+    
+    #subset only the groups being tested
+    gsub <- group[group %in% c(g1,g2)]
+    ysub <- y[group %in% c(g1,g2)]
+
+    # test statistic is the difference of the mean of y in groups g1 and g2
+    testStat <- function(var,gr) {mean(var[gr==g2]) - mean(var[gr == g1])}
+    
+    #original permutation
+    origStat <- testStat(ysub,gsub)
+    
+    #test statistic for n permutations
+    permStats <- sapply(1:n, function(i) testStat(ysub, sample(gsub)))
+    
+    #p value for two sided test is calculated as the percentage of permutations 
+    #having more extreme value than the original regardless of the sign
+    p <- mean(abs(permStats) > abs(origStat))
+    
+    # return p-value, test statistics of permutations and the original test statistic
+    list(p = p, permStats = permStats, origStat = origStat)
+}
 ```
