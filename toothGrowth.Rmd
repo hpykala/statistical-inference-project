@@ -41,7 +41,7 @@ ggplot(data = tooth, aes(x = len)) +
     xlab("Odontoblast length")
 ```
 
-From histograms it seems clear that the dosage of the vitamin C has correlation with the tooth growth. The supplement type doesn't have such a clear connection. We also see that the distributions don't seem to be very normal, but as the sample size is only 10 that is difficult to say for sure. In addition, if we combine the data by margins so that we can look at dosage or delivery method independently the distribution is pretty far from normal as it won't be even uni modal.
+From histograms it seems clear that the dosage of the vitamin C has correlation with the tooth growth. The supplement type doesn't have such a clear connection. We also see that the distributions don't seem to be very normal, but as the sample size is only 10 that is difficult to say for sure. In addition, if we combine the data by margins so that we can look at dosage or delivery method independently the distribution is pretty far from normal as it won't be even unimodal.
 
 ## Hypothesis testing
 
@@ -58,7 +58,7 @@ $H_a: \mu_{1} \neq \mu_{2}$
 
 ### Delivery method
 
-First we study the difference between delivery methods. The null hypothesis is that both delivery methods have the same average and we want to test alternative hypothesis that they are different. 
+First we study the difference between delivery methods. The null hypothesis is that both delivery methods have the same average and the alternative hypothesis is that they are different. 
 
 
 ```{r}
@@ -82,7 +82,9 @@ The p-value is close to zero so we can reject the null hypothesis on 0.05 signif
 pt3 <- permTest(tooth$len,tooth$dose, 1.0, 2.0)
 data.frame("Difference of means" =  pt3$origStat, "p-value" = pt3$p)
 ```
-The p-value is close to zero so we can reject the null on 0.05 significance level. The difference between groups is `r round(pt3$origStat,2)` so we can conclude that increasing the dosage from 1.0 to 2.0 increases the tooth growth.
+The p-value is close to zero so we can reject the null on 0.05 significance level. The difference between groups is `r round(pt3$origStat,2)` so we can conclude that increasing the dosage from 1.0 to 2.0 increases the tooth growth. 
+
+Multiple testing correction for controlling family wise error rate is not necessary in this case. Of the three tests one was not significant anyway and other two had so small p-values that they would survive even the strictest control procedures.
 
 #Conclusion
 
