@@ -1,11 +1,11 @@
 ---
-title: "ToothGrowth"
+title: "Effect of Vitamin C Supplement on Guinea Pig Tooth Growth"
 author: "Heli Pykälä"
 date: '2016-05-25'
 output: 
   word_document: 
-    fig_height: 3
-    fig_width: 5
+    fig_height: 4
+    fig_width: 6
 ---
 
 ```{r setup, include=FALSE}
@@ -19,7 +19,7 @@ In this report we research the effect of delivery method and dosage of vitamin C
 
 ## Data
 
-We use ToothGrowth dataset from the R library datasets. Descripion of the data: The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, (orange juice or ascorbic acid (a form of vitamin C and coded as VC).
+We use ToothGrowth data set from the R library data sets. Description of the data: The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, (orange juice or ascorbic acid (a form of vitamin C and coded as VC).
 
 Gather the data and factorize the dosage since we will compare groups instead of considering the dose as a quantitative variable. Next explore some characteristics of the data set.
 
@@ -30,16 +30,8 @@ tooth <- ToothGrowth
 tooth$dose <- factor(tooth$dose)
 levels(tooth$supp) <- c("Orange Juice", "Vitamin C")
 
-
-ggplot(data = tooth, aes(x = dose,y = len)) +
- geom_boxplot(fill="steelblue") +
-    facet_grid(facets = .~supp) +
-    ggtitle("Tooth length by supplement method and dose") +
-    xlab("Dose") + ylab("Odontoblast length")
-    
+summary(tooth)    
 ```
-
-From the boxplot it seems clear that the dosage of the vitamin C has correlation with the tooth growth. The supplement type doesn't have such a clear connection. 
 
 ```{r}
 ggplot(data = tooth, aes(x = len)) + 
@@ -49,11 +41,11 @@ ggplot(data = tooth, aes(x = len)) +
     xlab("Odontoblast length")
 ```
 
-From histograms we see that the distributions don't seem to be very normal, but as the sample size is only 10 that is difficult to say for sure. In addition, if we combine the data by margins so that we can look at dosage or delivery method independently the distribution is pretty far from normal as it won't be even unimodal.
+From histograms it seems clear that the dosage of the vitamin C has correlation with the tooth growth. The supplement type doesn't have such a clear connection. We also see that the distributions don't seem to be very normal, but as the sample size is only 10 that is difficult to say for sure. In addition, if we combine the data by margins so that we can look at dosage or delivery method independently the distribution is pretty far from normal as it won't be even uni modal.
 
 ## Hypothesis testing
 
-In the data exploration we concluded that assuming normally distributed samples isn't necessarily valid. Student's t-test is quite robust even when the data aren't normally distributed, but to be on the safe side we use a nonparametric permutation test to avoid having to make assumptions about the underlying distribution. In the permutation test our null hypothesis is that the different samples have same average. If the null hypothesis is valid the group label is irrelevant and we can permutate our samples. We use function permTest to calculate two sided p values for the tests. For details of the function, please refer to the appendix. Source the R function and set seed for reproducibility.
+In the data exploration we concluded that assuming normally distributed samples doesn't seem to be valid. Student's t-test is quite robust even when the data aren't normally distributed, but to be on the safe side we use a non parametric permutation test to avoid having to make assumptions about the underlying distribution. It suffices that the observations are independent which is the case according to the data set description. In the permutation test our null hypothesis is that the different samples have same average. If the null hypothesis is valid the group label is irrelevant and we can permutate our samples. We use function permTest to calculate two sided p values for the tests. For details of the function, please refer to the appendix. Source the R function and set seed for reproducibility.
 ```{r}
 source("permTest.R")
 set.seed(123)
@@ -74,7 +66,7 @@ pt1 <- permTest(tooth$len,tooth$supp, "Vitamin C", "Orange Juice")
 data.frame("Difference of means" =  pt1$origStat, "p-value" = pt1$p)
 ```
 
-the p-value of the test is `r round(pt1$p,2)` We can't reject the null hypothesis on 0.05 signifigance level.
+the p-value of the test is `r round(pt1$p,2)` We can't reject the null hypothesis on 0.05 significance level.
 
 ### Dosage
 
@@ -84,13 +76,13 @@ Next we perform two more permutation tests to see if there's statistically signi
 pt2 <- permTest(tooth$len,tooth$dose, 0.5, 1.0)
 data.frame("Difference of means" =  pt2$origStat, "p-value" = pt2$p)
 ```
-The p-value is close to zero so we can reject the null hypothesis on 0.05 signifigance level or any other reasonable critical value. The difference between groups is `r round(pt2$origStat,2)` so we can conclude that increasing the dosage from 0.5 to 1.0 increases the tooth growth.
+The p-value is close to zero so we can reject the null hypothesis on 0.05 significance level or any other reasonable critical value. The difference between groups is `r round(pt2$origStat,2)` so we can conclude that increasing the dosage from 0.5 to 1.0 increases the tooth growth.
 
 ```{r}
 pt3 <- permTest(tooth$len,tooth$dose, 1.0, 2.0)
 data.frame("Difference of means" =  pt3$origStat, "p-value" = pt3$p)
 ```
-The p-value is close to zero so we can reject the null on 0.05 signifigance level. The difference between groups is `r round(pt3$origStat,2)` so we can conclude that increasing the dosage from 1.0 to 2.0 increases the tooth growth.
+The p-value is close to zero so we can reject the null on 0.05 significance level. The difference between groups is `r round(pt3$origStat,2)` so we can conclude that increasing the dosage from 1.0 to 2.0 increases the tooth growth.
 
 #Conclusion
 
@@ -150,7 +142,7 @@ permTest <- function(y, group, g1, g2, n = 10000) {
 ```
 ## Histograms for permutation test results 
 
- 
+Here we display histograms for the permutation test results. The histogram shows the distribution of the test statistic and the vertical line the test statistic for the original distribution. The histograms are consistent with the calculated p-values.
 
 ```{r}
 dt1 <- data.frame(x=pt1$permStats)
