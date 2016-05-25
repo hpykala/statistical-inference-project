@@ -1,9 +1,9 @@
 ---
 title: "Exponential distribution and the Central Limit Theorem"
 author: "Heli Pykälä"
-date: '2016-05-12'
+date: '2016-05-25'
 output:
-  word_document: 
+  word_document:
     fig_height: 3
     fig_width: 5
   html_document:
@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Overview
 
-The Central Limit Theorem states that averages of independent and indentically distributed random variables should follow the standard normal distribution when properly normalized. We test this by simulation. We find that the Central Limit Theorem seems to hold for averages of 40 samples from the exponential distribution $Exp(0.2)$
+The Central Limit Theorem states that averages of independent and identically distributed random variables should follow the standard normal distribution when properly normalized. We test this by simulation. We find that the Central Limit Theorem seems to hold for averages of 40 samples from the exponential distribution $Exp(0.2)$
 
 ## Simulation
 
@@ -30,7 +30,7 @@ m <- 1000
 
 Then set seed for reproducibility and draw $n*m$ samples from the distribution. 
 ```{r simulation}
-set.seed(135)
+set.seed(136)
 samples <- rexp(n*m, lambda)
 ```
 
@@ -91,9 +91,12 @@ ggplot(dfSamples,aes(x=x))+
     ggtitle("Density histogram of original distribution")
 ```
 
-The histogram looks similar to the theoretical normal distribution. The original exponential distribution has very different charcteristics being always > 0, having the largest density at 0, and then exponentially decreasing.
+The histogram looks similar to the theoretical normal distribution. The distribution isn't perfectly normal and has some deviations from expected. The normality of the result could be improved by increasing the sample size. The original exponential distribution has very different characteristics being always > 0, having the largest density at 0, and then exponentially decreasing. Compared to the original distribution the distribution of sample means is much more normal.
+
+
 
 ##Conclusion
 
-The Central Limit Theorem seems to hold for averages of 40 exponentials. The original exponential distribution is really different from the normal distribution, but when we calculate the average of 40 random samples the resulting random variable seems to follow the normal distribution with expected parameters reasonably well.
+The Central Limit Theorem seems to hold reasonably well for averages of 40 exponentials. The original exponential distribution is really different from the normal distribution, but when we calculate the average of 40 random samples the resulting random variable seems to follow the normal distribution with expected parameters quite well.
+
 
