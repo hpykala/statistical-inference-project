@@ -1,7 +1,7 @@
 ---
 title: "ToothGrowth"
 author: "Heli Pykälä"
-date: '2016-05-12'
+date: '2016-05-25'
 output: 
   word_document: 
     fig_height: 3
@@ -21,23 +21,32 @@ In this report we research the effect of delivery method and dosage of vitamin C
 
 We use ToothGrowth dataset from the R library datasets. Descripion of the data: The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, (orange juice or ascorbic acid (a form of vitamin C and coded as VC).
 
+Gather the data and factorize the dosage since we will compare groups instead of considering the dose as a quantitative variable. Next explore some characteristics of the data set.
+
 ```{r}
 library(datasets)
 library(ggplot2)
 tooth <- ToothGrowth
 tooth$dose <- factor(tooth$dose)
+levels(tooth$supp) <- c("Orange Juice", "Vitamin C")
 
-ggplot(data = tooth, aes(x=dose,y=len)) +
+
+ggplot(data = tooth, aes(x = dose,y = len)) +
  geom_boxplot(fill="steelblue") +
-    facet_grid(facets = .~supp)
+    facet_grid(facets = .~supp) +
+    ggtitle("Tooth length by supplement method and dose") +
+    xlab("Dose") + ylab("Odontoblast length")
+    
 ```
 
 From the boxplot it seems clear that the dosage of the vitamin C has correlation with the tooth growth. The supplement type doesn't have such a clear connection. 
 
 ```{r}
-ggplot(data = tooth, aes(x=len)) + 
+ggplot(data = tooth, aes(x = len)) + 
     geom_histogram(binwidth = 2, colour = "black", fill = "steelblue") + 
-    facet_grid(facets = dose ~supp)
+    facet_grid(facets = dose ~ supp) +
+    ggtitle("Histogram of tooth lengths by supplement method and dose") +
+    xlab("Odontoblast length")
 ```
 
 From histograms we see that the distributions don't seem to be very normal, but as the sample size is only 10 that is difficult to say for sure. In addition, if we combine the data by margins so that we can look at dosage or delivery method independently the distribution is pretty far from normal as it won't be even unimodal.
@@ -61,7 +70,7 @@ First we study the difference between delivery methods. The null hypothesis is t
 
 
 ```{r}
-pt1 <- permTest(tooth$len,tooth$supp, "VC", "OJ")
+pt1 <- permTest(tooth$len,tooth$supp, "Vitamin C", "Orange Juice")
 data.frame("Difference of means" =  pt1$origStat, "p-value" = pt1$p)
 ```
 
@@ -141,6 +150,7 @@ permTest <- function(y, group, g1, g2, n = 10000) {
 ```
 ## Histograms for permutation test results 
 
+ 
 
 ```{r}
 dt1 <- data.frame(x=pt1$permStats)
